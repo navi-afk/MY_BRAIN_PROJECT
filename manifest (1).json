@@ -1,0 +1,12 @@
+{
+  "background_color": "#00d1ff",
+  "dir": "ltr",
+  "display": "standalone",
+  "name": "my dream project",
+  "orientation": "portrait",
+  "scope": "/",
+  "short_name": "mdp",
+  "start_url": "./",
+  "theme_color": "#00f8ff",
+  "description": "it in my head friends"
+}
