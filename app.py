@@ -3,6 +3,25 @@ import streamlit as st
 # --- ページ設定 ---
 st.set_page_config(page_title="bluearchive", layout="centered")
 
+st.markdown("""
+    <style>
+    /* 1. 右上の GitHub メニュー一式を消す */
+    .stAppToolbar {
+        display: none !important;
+    }
+
+    /* 2. 右下の赤い王冠とカニのバーを消す */
+    div[data-testid="stStatusWidget"], .viewerBadge_container__1QSob {
+        display: none !important;
+    }
+
+    /* 3. 上部の余計なヘッダー（白い帯）を消す */
+    header {
+        visibility: hidden;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
 # --- 1. パスワード認証機能 ---
 def check_password():
     """合言葉が正しいかチェックする関数"""
