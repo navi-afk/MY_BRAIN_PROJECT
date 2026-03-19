@@ -90,13 +90,28 @@ if st.session_state['current_page'] == "ホーム":
 
 elif st.session_state['current_page'] == "メッセージ":
     st.markdown(f"<h2 style='color:black; margin-top:10px;'>{st.session_state['partner_name']}</h2>", unsafe_allow_html=True)
-    if st.session_state['messages']:
-        st.markdown(f'<div style="background:#e3f2fd; color:#0d47a1; padding:15px; border-radius:10px;">{st.session_state["messages"][-1]}</div>', unsafe_allow_html=True)
     
+    # --- 追加機能：メッセージ履歴の表示 ---
+    for msg in st.session_state['messages']:
+        if isinstance(msg, dict):
+            # 役割に応じた色と配置
+            bg = "#e3f2fd" if msg["role"] == "user" else "#f0f2f6"
+            align = "right" if msg["role"] == "user" else "left"
+            margin = "margin-left: 20%;" if msg["role"] == "user" else "margin-right: 20%;"
+            st.markdown(f'<div style="background:{bg}; color:black; padding:10px; border-radius:10px; margin-bottom:5px; text-align:{align}; {margin}">{msg["content"]}</div>', unsafe_allow_html=True)
+        else:
+            # 以前のデータ形式との互換性用
+            st.markdown(f'<div style="background:#e3f2fd; color:black; padding:10px; border-radius:10px; margin-bottom:5px; text-align:right; margin-left: 20%;">{msg}</div>', unsafe_allow_html=True)
+    
+    # 入力フォーム（UI維持）
     with st.form(key="chat_ui", clear_on_submit=True):
         u_msg = st.text_input("メッセージを入力", placeholder="ここに入力", label_visibility="collapsed")
         if st.form_submit_button("送信") and u_msg:
-            st.session_state['messages'].append(u_msg)
+            # 自分のメッセージを保存
+            st.session_state['messages'].append({"role": "user", "content": u_msg})
+            # 相手の自動返答
+            ans = f"先生！『{u_msg}』ですね。了解しました！"
+            st.session_state['messages'].append({"role": "assistant", "content": ans})
             st.rerun()
 
 elif st.session_state['current_page'] == "ニュース":
