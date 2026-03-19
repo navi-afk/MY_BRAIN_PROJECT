@@ -2,8 +2,9 @@ import streamlit as st
 import google.generativeai as genai
 
 # --- 1. AIの設定 ---
-# あなたが取得した最新のAPIキーをここにセットしています
-genai.configure(api_key="AIzaSyDFpXPq6bwT211cqiVz9f-YyEQqIKB5zus")
+# st.secrets を使うことで、今保存したキーを安全に読み込みます
+api_key = st.secrets["GEMINI_API_KEY"]
+genai.configure(api_key=api_key)
 model = genai.GenerativeModel('gemini-1.5-flash')
 
 # --- 2. ページ設定とデザイン ---
