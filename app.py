@@ -1,15 +1,9 @@
 import streamlit as st
-import google.generativeai as genai
 
-# --- ページ設定 ---
+# --- 1. ページ基本設定 ---
 st.set_page_config(page_title="app", layout="centered")
 
-# --- AIの設定 (Gemini) ---
-# あなたのAPIキーをセットしました
-genai.configure(api_key="AIzaSyBX62e_iQY6JKuYIZ9vgm_yd9_cruBoBc0")
-model = genai.GenerativeModel('gemini-1.5-flash')
-
-# --- データの管理 ---
+# --- 2. データの管理（UIの土台を維持） ---
 if 'current_page' not in st.session_state:
     st.session_state['current_page'] = "ホーム"
 if 'partner_name' not in st.session_state:
@@ -24,123 +18,77 @@ if "p" in params:
         st.session_state['current_page'] = params["p"]
         st.rerun()
 
-# --- CSS (UI調整) ---
+# --- 3. CSS (あなたのデザインを維持) ---
 st.markdown(f"""
     <style>
-    [data-testid="stAppViewContainer"] {{
-        background-color: #ffffff;
-    }}
-
-    /* トップバー */
+    [data-testid="stAppViewContainer"] {{ background-color: #ffffff; }}
     .top-bar {{
-        background-color: #ff8fa3; 
-        color: #ffffff !important; 
-        padding-top: 12px;
-        font-size: 18px; font-weight: bold; 
+        background-color: #ff8fa3; color: #ffffff !important; 
+        padding-top: 12px; font-size: 18px; font-weight: bold; 
         position: fixed; top: 0; left: 0; width: 100%; 
         z-index: 10001; text-align: center; height: 50px;
     }}
-
-    /* メインコンテンツ位置 */
     .main-content {{
-        position: absolute;
-        top: 60px;
-        left: 0; width: 100%;
-        padding: 0 20px 150px 20px;
-        display: block !important;
+        position: absolute; top: 60px; left: 0; width: 100%;
+        padding: 0 20px 150px 20px; display: block !important;
     }}
-
-    /* 設定項目のスタイル */
-    .setting-item {{
-        background: #f0f2f6;
-        padding: 15px;
-        border-radius: 10px;
-        margin-bottom: 10px;
-        color: black;
-    }}
-
-    /* フッター */
     .custom-footer {{
         position: fixed; bottom: 0; left: 0; width: 100%; height: 80px;
-        background-color: #ffffff;
-        display: flex; justify-content: space-around; align-items: center;
-        border-top: 1px solid #eeeeee;
-        z-index: 10000;
+        background-color: #ffffff; display: flex; justify-content: space-around; 
+        align-items: center; border-top: 1px solid #eeeeee; z-index: 10000;
         padding-bottom: env(safe-area-inset-bottom);
     }}
-    
     .footer-item {{
         text-decoration: none; color: #888888; font-size: 10px;
         display: flex; flex-direction: column; align-items: center; flex: 1;
     }}
     .footer-item.active {{ color: #38bdf8; font-weight: bold; }}
     .footer-icon {{ font-size: 22px; margin-bottom: 2px; }}
-
     header, [data-testid="stHeader"], [data-testid="stToolbar"] {{ display: none !important; }}
     [data-testid="stVerticalBlock"] {{ gap: 0rem !important; }}
     .stButton {{ display: none; }}
     </style>
     """, unsafe_allow_html=True)
 
-# --- 1. トップバー ---
+# --- 4. トップバー表示 ---
 st.markdown(f'<div class="top-bar">{st.session_state["current_page"]}</div>', unsafe_allow_html=True)
 
-# --- 2. メインコンテンツ ---
+# --- 5. メインコンテンツ ---
 st.markdown('<div class="main-content">', unsafe_allow_html=True)
 
 if st.session_state['current_page'] == "ホーム":
     st.markdown("<h1 style='color:black; margin-top:10px;'>Home</h1>", unsafe_allow_html=True)
-    st.markdown("<div style='background:#fff9c4; padding:15px; border-radius:10px; color:#856404; margin:15px 0;'>COMING SOON...</div>", unsafe_allow_html=True)
-    st.write("---")
-    st.write("ようこそ！下のメニューから機能を選んでください。")
+    st.write("おかえりなさい、先生！")
 
 elif st.session_state['current_page'] == "メッセージ":
     st.markdown(f"<h2 style='color:black; margin-top:10px;'>{st.session_state['partner_name']}</h2>", unsafe_allow_html=True)
     
-    # 会話履歴を表示
     for msg in st.session_state['messages']:
         bg = "#e3f2fd" if msg["role"] == "user" else "#f0f2f6"
         align = "right" if msg["role"] == "user" else "left"
         margin = "margin-left: 15%;" if msg["role"] == "user" else "margin-right: 15%;"
-        st.markdown(f'<div style="background:{bg}; color:black; padding:12px; border-radius:15px; margin-bottom:8px; text-align:{align}; {margin} shadow: 0 1px 2px rgba(0,0,0,0.1);">{msg["content"]}</div>', unsafe_allow_html=True)
+        st.markdown(f'<div style="background:{bg}; color:black; padding:12px; border-radius:15px; margin-bottom:8px; text-align:{align}; {margin}">{msg["content"]}</div>', unsafe_allow_html=True)
 
-    # 入力フォーム
     with st.form(key="chat_ui", clear_on_submit=True):
         u_msg = st.text_input("メッセージを入力", placeholder="ここに入力", label_visibility="collapsed")
         if st.form_submit_button("送信") and u_msg:
-            # 自分のメッセージを保存
             st.session_state['messages'].append({"role": "user", "content": u_msg})
-            
-            # --- AI（Gemini）による返信生成 ---
-            try:
-                # キャラになりきらせる命令
-                prompt = f"あなたはゲーム『ブルーアーカイブ』の{st.session_state['partner_name']}です。先生（ユーザー）からのメッセージに、そのキャラらしい口調で1〜2文で返信してください。ユーザーのメッセージ: {u_msg}"
-                response = model.generate_content(prompt)
-                ai_text = response.text
-            except Exception as e:
-                ai_text = "（通信エラーが発生しました。時間を置いて試してください）"
-            
-            st.session_state['messages'].append({"role": "assistant", "content": ai_text})
+            # 簡易返信（一旦AIなし）
+            st.session_state['messages'].append({"role": "assistant", "content": f"{u_msg}ですね！"})
             st.rerun()
-
-elif st.session_state['current_page'] == "ニュース":
-    st.markdown("<h1 style='color:black; margin-top:10px;'>News</h1>", unsafe_allow_html=True)
-    st.write("最新情報はありません。")
 
 elif st.session_state['current_page'] == "設定":
     st.markdown("<h1 style='color:black; margin-top:10px;'>Settings</h1>", unsafe_allow_html=True)
-    st.markdown('<div class="setting-item"><b>チャット相手の名前設定</b></div>', unsafe_allow_html=True)
-    new_name = st.text_input("相手の名前を変更", value=st.session_state['partner_name'], label_visibility="collapsed")
+    new_name = st.text_input("相手の名前を変更", value=st.session_state['partner_name'])
     if new_name != st.session_state['partner_name']:
         st.session_state['partner_name'] = new_name
         st.rerun()
 
 st.markdown('</div>', unsafe_allow_html=True)
 
-# --- 3. フッター ---
+# --- 6. フッター ---
 h_class = "active" if st.session_state['current_page'] == "ホーム" else ""
 m_class = "active" if st.session_state['current_page'] == "メッセージ" else ""
-n_class = "active" if st.session_state['current_page'] == "ニュース" else ""
 s_class = "active" if st.session_state['current_page'] == "設定" else ""
 
 st.markdown(f"""
@@ -151,9 +99,8 @@ st.markdown(f"""
         <a href="/?p=メッセージ" target="_self" class="footer-item {m_class}">
             <span class="footer-icon">💬</span><span>メッセージ</span>
         </a>
-        <a href="/?p=ニュース" target="_self" class="footer-item {n_class}">
-            <span class="footer-icon">📰</span><span>ニュース</span>
-        </a>
         <a href="/?p=設定" target="_self" class="footer-item {s_class}">
             <span class="footer-icon">⚙️</span><span>設定</span>
         </a>
+    </div>
+    """, unsafe_allow_html=True)
