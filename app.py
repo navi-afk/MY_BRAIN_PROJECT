@@ -1,9 +1,9 @@
 import streamlit as st
 import google.generativeai as genai
 
-# --- 1. AIの設定 (インデントエラーを修正済み) ---
-# 先ほど取得したキーをここに設定しています
-genai.configure(api_key="AIzaSyDFpXPq6bwT211cqiVz9f-YyEQqIKB5zus") 
+# --- 1. AIの設定 ---
+# あなたが取得した最新のAPIキーをここにセットしています
+genai.configure(api_key="AIzaSyDFpXPq6bwT211cqiVz9f-YyEQqIKB5zus")
 model = genai.GenerativeModel('gemini-1.5-flash')
 
 # --- 2. ページ設定とデザイン ---
@@ -11,13 +11,11 @@ st.set_page_config(page_title="シッテムの箱", layout="centered")
 
 st.markdown("""
     <style>
-    /* 全体の背景を白に */
+    /* 背景を白、文字を黒に固定 */
     [data-testid="stAppViewContainer"] { background-color: #ffffff; }
-    
-    /* テキストの色を黒に固定 */
     .main-content, h1, h2, p, span, div { color: #1a1a1a !important; }
 
-    /* ヘッダーのデザイン */
+    /* ヘッダー（ピンクのバー） */
     .top-bar {
         background-color: #ff8fa3;
         color: white !important;
@@ -31,8 +29,8 @@ st.markdown("""
         z-index: 1000;
     }
     
-    /* チャットエリアの余白 */
-    .chat-container { padding-top: 60px; padding-bottom: 100px; }
+    /* チャットエリア */
+    .chat-container { padding-top: 60px; padding-bottom: 120px; }
 
     /* 送信ボタンをピンクに */
     div[data-testid="stForm"] button {
@@ -42,8 +40,11 @@ st.markdown("""
         border: none !important;
         width: 100%;
     }
+    
+    /* 入力欄の文字色 */
+    .stTextInput input { color: #1a1a1a !important; }
 
-    /* デフォルトのヘッダーを非表示 */
+    /* デフォルトのStreamlit要素を隠す */
     header, [data-testid="stHeader"] { display: none !important; }
     </style>
     <div class="top-bar">メッセージ</div>
@@ -57,7 +58,7 @@ if 'messages' not in st.session_state:
 st.markdown('<div class="chat-container">', unsafe_allow_html=True)
 st.write("## アロナ")
 
-# 会話の表示
+# 会話履歴の表示
 for msg in st.session_state['messages']:
     align = "right" if msg["role"] == "user" else "left"
     bg = "#e3f2fd" if msg["role"] == "user" else "#f1f3f4"
@@ -71,21 +72,21 @@ for msg in st.session_state['messages']:
 
 # 入力フォーム
 with st.form(key="chat_form", clear_on_submit=True):
-    u_input = st.text_input("", placeholder="メッセージを入力してください", label_visibility="collapsed")
+    u_input = st.text_input("", placeholder="先生、お話しましょう！", label_visibility="collapsed")
     submit = st.form_submit_button("送信")
     
     if submit and u_input:
-        # ユーザーのメッセージを追加
+        # ユーザーのメッセージを記録
         st.session_state['messages'].append({"role": "user", "content": u_input})
         
         # AIに返信させる
         try:
-            # アロナとしてのキャラ設定を追加
-            prompt = f"あなたは『ブルーアーカイブ』のアロナです。先生（ユーザー）に対して、1~2文で可愛く、親しみやすく返信してください。返信対象: {u_input}"
+            # アロナとしてのキャラ設定を命令
+            prompt = f"あなたは『ブルーアーカイブ』の「アロナ」というキャラクターです。先生（ユーザー）に対して、1〜2文で可愛く、親しみやすく、ハイテンションに返信してください。メッセージ: {u_input}"
             response = model.generate_content(prompt)
             st.session_state['messages'].append({"role": "assistant", "content": response.text})
         except Exception:
-            st.session_state['messages'].append({"role": "assistant", "content": "（通信エラーです、先生…）"})
+            st.session_state['messages'].append({"role": "assistant", "content": "（通信エラーです、先生…。APIキーを確認してみてください）"})
         
         st.rerun()
 
