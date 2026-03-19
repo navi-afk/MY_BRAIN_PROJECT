@@ -1,13 +1,19 @@
 import streamlit as st
+import google.generativeai as genai
 
 # --- ページ設定 ---
 st.set_page_config(page_title="app", layout="centered")
+
+# --- AIの設定 (Gemini) ---
+# あなたのAPIキーをセットしました
+genai.configure(api_key="AIzaSyBX62e_iQY6JKuYIZ9vgm_yd9_cruBoBc0")
+model = genai.GenerativeModel('gemini-1.5-flash')
 
 # --- データの管理 ---
 if 'current_page' not in st.session_state:
     st.session_state['current_page'] = "ホーム"
 if 'partner_name' not in st.session_state:
-    st.session_state['partner_name'] = "unknown"
+    st.session_state['partner_name'] = "アロナ"
 if 'messages' not in st.session_state:
     st.session_state['messages'] = []
 
@@ -35,7 +41,7 @@ st.markdown(f"""
         z-index: 10001; text-align: center; height: 50px;
     }}
 
-    /* メインコンテンツ位置（赤枠の位置に固定） */
+    /* メインコンテンツ位置 */
     .main-content {{
         position: absolute;
         top: 60px;
@@ -91,27 +97,30 @@ if st.session_state['current_page'] == "ホーム":
 elif st.session_state['current_page'] == "メッセージ":
     st.markdown(f"<h2 style='color:black; margin-top:10px;'>{st.session_state['partner_name']}</h2>", unsafe_allow_html=True)
     
-    # --- 追加機能：メッセージ履歴の表示 ---
+    # 会話履歴を表示
     for msg in st.session_state['messages']:
-        if isinstance(msg, dict):
-            # 役割に応じた色と配置
-            bg = "#e3f2fd" if msg["role"] == "user" else "#f0f2f6"
-            align = "right" if msg["role"] == "user" else "left"
-            margin = "margin-left: 20%;" if msg["role"] == "user" else "margin-right: 20%;"
-            st.markdown(f'<div style="background:{bg}; color:black; padding:10px; border-radius:10px; margin-bottom:5px; text-align:{align}; {margin}">{msg["content"]}</div>', unsafe_allow_html=True)
-        else:
-            # 以前のデータ形式との互換性用
-            st.markdown(f'<div style="background:#e3f2fd; color:black; padding:10px; border-radius:10px; margin-bottom:5px; text-align:right; margin-left: 20%;">{msg}</div>', unsafe_allow_html=True)
-    
-    # 入力フォーム（UI維持）
+        bg = "#e3f2fd" if msg["role"] == "user" else "#f0f2f6"
+        align = "right" if msg["role"] == "user" else "left"
+        margin = "margin-left: 15%;" if msg["role"] == "user" else "margin-right: 15%;"
+        st.markdown(f'<div style="background:{bg}; color:black; padding:12px; border-radius:15px; margin-bottom:8px; text-align:{align}; {margin} shadow: 0 1px 2px rgba(0,0,0,0.1);">{msg["content"]}</div>', unsafe_allow_html=True)
+
+    # 入力フォーム
     with st.form(key="chat_ui", clear_on_submit=True):
         u_msg = st.text_input("メッセージを入力", placeholder="ここに入力", label_visibility="collapsed")
         if st.form_submit_button("送信") and u_msg:
             # 自分のメッセージを保存
             st.session_state['messages'].append({"role": "user", "content": u_msg})
-            # 相手の自動返答
-            ans = f"先生！『{u_msg}』ですね。了解しました！"
-            st.session_state['messages'].append({"role": "assistant", "content": ans})
+            
+            # --- AI（Gemini）による返信生成 ---
+            try:
+                # キャラになりきらせる命令
+                prompt = f"あなたはゲーム『ブルーアーカイブ』の{st.session_state['partner_name']}です。先生（ユーザー）からのメッセージに、そのキャラらしい口調で1〜2文で返信してください。ユーザーのメッセージ: {u_msg}"
+                response = model.generate_content(prompt)
+                ai_text = response.text
+            except Exception as e:
+                ai_text = "（通信エラーが発生しました。時間を置いて試してください）"
+            
+            st.session_state['messages'].append({"role": "assistant", "content": ai_text})
             st.rerun()
 
 elif st.session_state['current_page'] == "ニュース":
@@ -120,15 +129,11 @@ elif st.session_state['current_page'] == "ニュース":
 
 elif st.session_state['current_page'] == "設定":
     st.markdown("<h1 style='color:black; margin-top:10px;'>Settings</h1>", unsafe_allow_html=True)
-    
     st.markdown('<div class="setting-item"><b>チャット相手の名前設定</b></div>', unsafe_allow_html=True)
     new_name = st.text_input("相手の名前を変更", value=st.session_state['partner_name'], label_visibility="collapsed")
     if new_name != st.session_state['partner_name']:
         st.session_state['partner_name'] = new_name
         st.rerun()
-    
-    st.markdown('<div class="setting-item" style="margin-top:20px;"><b>アプリについて</b></div>', unsafe_allow_html=True)
-    st.write("Version 1.0.0")
 
 st.markdown('</div>', unsafe_allow_html=True)
 
@@ -149,11 +154,6 @@ st.markdown(f"""
         <a href="/?p=ニュース" target="_self" class="footer-item {n_class}">
             <span class="footer-icon">📰</span><span>ニュース</span>
         </a>
-        <div class="footer-item" style="opacity: 0.2;">
-            <span class="footer-icon">🚫</span><span>Nothing</span>
-        </div>
         <a href="/?p=設定" target="_self" class="footer-item {s_class}">
             <span class="footer-icon">⚙️</span><span>設定</span>
         </a>
-    </div>
-    """, unsafe_allow_html=True)
